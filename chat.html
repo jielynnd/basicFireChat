@@ -1,0 +1,91 @@
+<!doctype html>
+<html>
+  <head>
+    <style type="text/css">
+      img {width: 500px; height: 500px;}
+    </style>  
+
+  <!--Java script for firebase-->
+    <script src='https://cdn.firebase.com/js/client/2.2.1/firebase.js'></script> 
+    <script src='https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js'></script>
+    <script src="https://www.gstatic.com/firebasejs/3.1.0/firebase.js"></script>
+
+  </head>
+  <body>
+    <label> Hello user! </label>
+    <div id='messagesDiv'></div>
+    <input type='text' id='nameInput' placeholder='Name'>
+    <input type='text' id='messageInput' placeholder='Message'>
+    <input type="file" id='file'>
+
+
+    <script>
+      // Initialize Firebase
+      var config = {
+        apiKey: "AIzaSyCJnkYvYPCO4j353BFuEgX7SGeUz7TK-K0",
+        authDomain: "chat-up-4832c.firebaseapp.com",
+        databaseURL: "https://chat-up-4832c.firebaseio.com",
+        storageBucket: "chat-up-4832c.appspot.com",
+      };
+      firebase.initializeApp(config);
+
+      var myDataRef = new Firebase('https://chat-up-4832c.firebaseio.com/');
+        
+      // Points to the root reference
+      var storageRef = firebase.storage().ref();
+        
+
+      file.addEventListener('change', handleFileSelect, false);
+
+      function handleFileSelect(e) {
+        var file = e.target.files[0];
+        
+        // Get a reference to store file at photos/<FILENAME>.jpg
+        var photoRef = storageRef.child(file.name);
+        // Upload file to Firebase Storage
+        var uploadTask = photoRef.put(file);
+        uploadTask.on('state_changed', null, null, function() {
+
+          var downloadURL = uploadTask.snapshot.downloadURL;
+          // Set the download URL to the message box, so that the user can send it to the database
+          $('#messageInput').val(downloadURL);
+        });
+      }
+
+      $('#messageInput').keypress(function (e) {
+        if (e.keyCode == 13) {
+          var name = $('#nameInput').val();
+          var text = $('#messageInput').val();
+          myDataRef.push().set({name: name, text: text});
+          $('#messageInput').val('');
+        }
+      });
+
+      myDataRef.on('child_added', function(snapshot) {
+        var message = snapshot.val();
+        displayChatMessage(message.name, message.text);
+      });
+
+      function displayChatMessage(name, text) {
+        
+        if ( text.indexOf("https://firebasestorage.googleapis.com/") == 0
+        || text.indexOf("https://lh3.googleusercontent.com/") == 0
+        || text.indexOf("http://pbs.twimg.com/") == 0
+        || text.indexOf("data:image/") == 0) 
+        {
+            var imgElm = document.createElement("img");
+            imgElm.src = text;
+            $('<div/>').html(imgElm).prepend($('<em/>').text(name+': ')).appendTo($('#messagesDiv'));
+        }
+        
+        else
+        {
+          $('<div/>').text(text).prepend($('<em/>').text(name+': ')).appendTo($('#messagesDiv'));
+        }
+        $('#messagesDiv')[0].scrollTop = $('#messagesDiv')[0].scrollHeight;
+      };
+  
+  </script>
+
+  </body>
+</html>
